@@ -1,2 +1,2 @@
 # fpa
-A Floating-Point Arithmetic Implementation
+A Floating-Point Arithmetic Implementation.
