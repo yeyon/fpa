@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "fpa"
 version = "0.1.0"
-description = "A Floating-Point Arithmetic Implementation"
+description = "A Floating-Point Arithmetic Implementation."
 authors = ["Eduardo García Maleta <yeyon.personal@protonmail.com>"]
 readme = "README.md"
 license = "MIT"
