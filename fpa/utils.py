@@ -31,3 +31,25 @@ def build_mantissa(n, base: int, length: int):
         mantissa.extend(0 for _ in range(length - len(mantissa)))
     
     return e, tuple(mantissa)
+
+
+def match_length(m1, m2):
+    if len(m1) == len(m2):
+        return m1, m2
+    
+    l, s = (m1, m2) if len(m1) > len(m2) else (m2, m1)
+
+    temp = [0 for _ in range(len(l) - len(s))]
+    temp.extend(s)
+    s = temp
+
+    if m1 == l:
+        return l, s
+    return s, l
+
+def equal_lengths(f):
+    def dec_f(*args):
+        m1, m2 = match_length(args[0], args[1])
+        return f(m1, m2, *args[2:])
+    
+    return dec_f
