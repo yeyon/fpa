@@ -41,9 +41,6 @@ def mantissa_sub(m1, m2, base):
 
         m.appendleft(s)
     
-    if carry > 0:
-        raise Exception('operation failed: m1 must be greater than m2!')
-    
     while(m[0] == 0):
         m.popleft()
     
@@ -82,4 +79,51 @@ def mantissa_mul(m1, m2, base):
 
 @equal_lengths
 def mantissa_div(m1, m2, base):
-    pass
+    divd = m1
+    divs = m2
+    res = deque()
+    
+    started_count = False
+    i = 0
+    while i < len(divs):
+        if len(divd) < len(divs):
+            res.append(0)
+        else:
+            # buscar mayor escalar q multiplicado x divs sea menor o igual q el dividendo
+            j = 0
+            m = None
+            comp = None
+            while True:
+                temp = number_mul(divs, j+1, base)
+                comp = compare(temp, divd)
+                if comp == 1:
+                    break
+                else:
+                    m = temp
+                    j += 1
+                    if comp == 0:
+                        break
+            
+            res.append(j)
+
+            if comp == 0:
+                break
+
+            if j > 0:
+                divd = mantissa_sub(divd, m, base)
+            
+                if not started_count:
+                    started_count = True
+        
+        divd.append(0)
+        
+        if started_count:
+            i += 1
+    
+    # contando cantidad de 0s y quitandolos
+    i = 0
+    while res[0] == 0:
+        res.popleft()
+        i += 1
+    
+    return list(res), i
