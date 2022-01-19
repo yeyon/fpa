@@ -300,7 +300,7 @@ class FPA:
         return self._div(x, y)
 
 
-    def _exp(self, x, iterations):
+    def _raw_exp(self, x: FPANumber, iterations):
         one = self.new(1)
 
         k = iterations
@@ -317,16 +317,19 @@ class FPA:
         
         return res
 
+    def _exp(self, x: FPANumber, iterations=100):
+        if x.is_negative():
+            one = self.new(1)
+            return self._div(one, self._raw_exp(x.abs(), iterations))
+        
+        return self._raw_exp(x, iterations)
+
     @_nan_safe
     @_same_fpa
     @_overflow
     @_underflow
     def exp(self, x: FPANumber, iterations=100):
-        if x.is_negative():
-            one = self.new(1)
-            return self._div(one, self._log(x.abs(), iterations))
-        
-        return self._log(x, iterations)
+        return self._exp(x, iterations)
 
 
     def _raw_log(self, x: FPANumber, iterations):
