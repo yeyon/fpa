@@ -24,6 +24,22 @@ class FPANumber:
     def is_zero(self):
         return (not self.is_nan()) and all(x == 0 for x in self._mantissa)
 
+    def is_integer(self):
+        if self.is_nan():
+            return False
+        
+        if len(self._mantissa) > self._exponent:
+            return all(x == 0 for x in self._mantissa[self._exponent+1:])
+    
+        return True
+
+
+    def abs(self):
+        if not self.is_nan():
+            return FPANumber(self._base, self._exponent, self._mantissa, 1)
+        return self
+
+
     def export(self):
         res = 0
         b = math.pow(self._base, self._exponent - len(self._mantissa) + 1)
@@ -83,18 +99,6 @@ def _underflow(f):
     return dec_f
 
 
-@_nan_safe
-def abs_value(n: FPANumber):
-    return FPANumber(n._base, n._exponent, n._mantissa, 1)
-
-@_nan_safe
-def is_integer(n: FPANumber):
-    if len(n._mantissa) > n._exponent:
-        return all(x == 0 for x in n._mantissa[n._exponent+1:])
-    
-    return True
-
-
 class FPA:
     def __init__(self, base, mantissa_length, m, M):
         self._base = base
@@ -114,6 +118,8 @@ class FPA:
         epsilon_mantissa.extend(0 for _ in range(mantissa_length - 1))
         self._minus_epsilon = FPANumber(base, m, epsilon_mantissa, -1)
         self._plus_epsilon = FPANumber(base, m, epsilon_mantissa, 1)
+
+        self._nan = FPANumber(base, (M+m)//2, zero_mantissa, 0)
 
         self._pi = FPANumber.create(math.pi, base, mantissa_length)
 
@@ -174,10 +180,10 @@ class FPA:
 
 
     def _is_pair(self, x: FPANumber):
-        if is_integer(x):
+        if x.is_integer():
             two = self.new(2)
             x = self._div(x, two)
-            return is_integer(x)
+            return x.is_integer()
         
         return False
 
@@ -189,7 +195,7 @@ class FPA:
 
     def _sum(self, x: FPANumber, y: FPANumber):
         x_s, y_s = x._sign, y._sign
-        x, y = abs_value(x), abs_value(y)
+        x, y = x.abs(), y.abs()
         x, x_s, y, y_s = x, x_s, y, y_s if self.great_or_equal(x, y) else y, y_s, x, x_s
 
         mx, my = x._mantissa, y._mantissa
@@ -281,7 +287,7 @@ class FPA:
     def exp(self, x: FPANumber, iterations=100):
         if x._sign == -1:
             one = self.new(1)
-            return self._div(one, self._log(abs_value(x), iterations))
+            return self._div(one, self._log(x.abs(), iterations))
         
         return self._log(x, iterations)
 
@@ -337,7 +343,7 @@ class FPA:
 
 
     def _pow(self, x: FPANumber, y: FPANumber):
-        if is_integer(y):
+        if y.is_integer():
             iterations = int(y.export())
             res = self.new(1)
             for _ in range(iterations):
@@ -363,9 +369,9 @@ class FPA:
             # excepcion
         
         if y._sign == -1:
-            return self._div(one, self._pow(x, abs_value(y)))
+            return self._div(one, self._pow(x, y.abs()))
         
-        if x._sign == -1 and not is_integer(y):
+        if x._sign == -1 and not y.is_integer():
             # exception
             pass
         
@@ -456,36 +462,3 @@ class FPA:
     @_underflow
     def cos(self, x: FPANumber, iterations=100):
         return self._cos(x, iterations)
-
-
-#    def _sqrt(self, x: FPANumber, iterations):
-#        n = FPANumber.create(1, self._base, self._mantissa_length)
-#        k = FPANumber.create(0.5, self._base, self._mantissa_length)
-#
-#        for _ in range(iterations):
-#            temp = self._mul(self._sum(n, self._div(x, n)), k)
-#            if abs_value(self._sub(temp, n)).is_zero():
-#                break
-#
-#            n = temp
-#        
-#        return n
-#
-#    @_nan_safe
-#    @_same_fpa
-#    @_underflow
-#    def sqrt(self, x: FPANumber, iterations=100):
-#        if x._sign == 1:
-#            return self._sqrt(x, iterations)
-#        # exception
-#
-#
-#    def _square(self, x: FPANumber):
-#        return self._mul(x, x)
-#
-#    @_nan_safe
-#    @_same_fpa
-#    @_overflow
-#    @_underflow
-#    def square(self, x: FPANumber):
-#        return self._square(x)
