@@ -206,6 +206,15 @@ class FPA:
         return self._is_pair(x)
 
 
+    def _is_inf(self, x: FPANumber):
+        return self._equal(x.abs(), self._plus_inf)
+
+    @_nan_safe
+    @_same_fpa
+    def is_inf(self, x: FPANumber):
+        return self._is_inf(x)
+
+
     def _sum(self, x: FPANumber, y: FPANumber):
         x_s, y_s = x._sign, y._sign
         x, y = x.abs(), y.abs()
@@ -244,6 +253,9 @@ class FPA:
 
 
     def _mul(self, x: FPANumber, y: FPANumber):
+        if (x.is_zero() and self._is_inf(y)) or (self._is_inf(x) and y.is_zero()):
+            return self._nan
+
         e = x._exponent + y._exponent
         res_expected_length = 2 * self._mantissa_length - 1
 
@@ -260,6 +272,18 @@ class FPA:
 
 
     def _div(self, x: FPANumber, y: FPANumber):
+        if y.is_zero():
+            if x.is_zero():
+                return self._nan
+            if y._sign == x._sign:
+                return self._plus_inf
+            return self._minus_inf
+        
+        if x.is_zero() and self._is_inf(y):
+            if x._sign == y._sign:
+                return self._plus_zero
+            return self._minus_zero
+        
         e = x._exponent - y._exponent
         m, zc = mantissa_div(x._mantissa, y._mantissa, self._base)
 
