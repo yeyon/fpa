@@ -353,19 +353,20 @@ class FPA:
         return res
 
     def _log(self, x: FPANumber, iterations=1000):
-        if x.is_positive() and not x.is_zero():
-            # x = ab and b = base^ex
-            # ln(x) = ln(ab) = ln(a) + ln(b) = ln(a) + exln(base)
-            b_mantissa = [1]
-            b_mantissa.extend(0 for _ in range(self._mantissa_length - 1))
-            b = FPANumber(self._base, x._exponent, b_mantissa, x._sign)
-            a = self._div(x, b)
+        if x.is_negative() or x.is_zero():
+            return self._nan
+        
+        # x = ab and b = base^ex
+        # ln(x) = ln(ab) = ln(a) + ln(b) = ln(a) + exln(base)
+        b_mantissa = [1]
+        b_mantissa.extend(0 for _ in range(self._mantissa_length - 1))
+        b = FPANumber(self._base, x._exponent, b_mantissa, x._sign)
+        a = self._div(x, b)
 
-            lnb = self.new(x._exponent * math.log(self._base))
-            lna = self._raw_log(a, iterations)
+        lnb = self.new(x._exponent * math.log(self._base))
+        lna = self._raw_log(a, iterations)
 
-            return self._sum(lna, lnb)
-        # exception
+        return self._sum(lna, lnb)
 
 
     @_nan_safe
