@@ -48,6 +48,8 @@ def _same_fpa(f):
     def dec_f(*args):
         fpa = args[0]
         for x in args[1:]:
+            if not isinstance(x, FPANumber):
+                continue
             if (x._base != fpa._base or
                 not (fpa._m <= x._exponent <= fpa._M) or
                 len(x._mantissa) != fpa._mantissa_length):
