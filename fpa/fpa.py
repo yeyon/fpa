@@ -13,7 +13,10 @@ class FPANumber:
 
     @classmethod
     def create(cls, n, base, mantissa_length):
-        s = 1 if n >= 0 else -1
+        if n == 0:
+            return cls(base, 0, [0 for _ in range(mantissa_length)], 1)
+        
+        s = 1 if n > 0 else -1
         e, m = build_mantissa(abs(n), base, mantissa_length)
 
         return cls(base, e, m, s)
@@ -115,9 +118,9 @@ class FPA:
         self._m = m
         self._M = M
 
-        zero_mantissa = [0 for _ in range(mantissa_length)]
-        self._plus_zero = FPANumber(base, (M+m)//2, zero_mantissa, 1)
-        self._minus_zero = FPANumber(base, (M+m)//2, zero_mantissa, -1)
+        self._plus_zero = FPANumber.create(0, base, mantissa_length)
+        self._minus_zero = FPANumber.create(0, base, mantissa_length)
+        self._minus_zero._sign = -1
 
         infinity_mantissa = [1 for _ in range(mantissa_length)]
         self._minus_inf = FPANumber(base, M, infinity_mantissa, -1)
@@ -128,7 +131,8 @@ class FPA:
         self._minus_epsilon = FPANumber(base, m, epsilon_mantissa, -1)
         self._plus_epsilon = FPANumber(base, m, epsilon_mantissa, 1)
 
-        self._nan = FPANumber(base, (M+m)//2, zero_mantissa, 0)
+        self._nan = FPANumber.create(0, base, mantissa_length)
+        self._nan._sign = 0
 
         self._pi = FPANumber.create(math.pi, base, mantissa_length)
 
