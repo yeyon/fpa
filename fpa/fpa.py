@@ -21,6 +21,12 @@ class FPANumber:
     def is_nan(self):
         return self._sign == 0
 
+    def is_negative(self):
+        return self._sign == -1
+
+    def is_positive(self):
+        return self._sign == 1
+
     def is_zero(self):
         return (not self.is_nan()) and all(x == 0 for x in self._mantissa)
 
@@ -41,13 +47,16 @@ class FPANumber:
 
 
     def export(self):
+        if self.is_nan():
+            return None
+        
         res = 0
         b = math.pow(self._base, self._exponent - len(self._mantissa) + 1)
         for k in reversed(self._mantissa):
             res += k*b
             b *= b
         
-        return res
+        return self._sign * res
 
 
 def _nan_safe(f):
@@ -81,7 +90,7 @@ def _overflow(f):
         res = f(*args)
         fpa = args[0]
 
-        if res._sign != 0 and res._exponent > fpa._M:
+        if (not res.is_nan()) and res._exponent > fpa._M:
             return fpa._plus_inf if res._sign == 1 else fpa._minus_inf
         return res
     
@@ -92,7 +101,7 @@ def _underflow(f):
         res = f(*args)
         fpa = args[0]
 
-        if res._sign != 0 and res._exponent < fpa._m:
+        if (not res.is_nan()) and res._exponent < fpa._m:
             return fpa._plus_zero if res._sign == 1 else fpa._minus_zero
         return res
     
@@ -141,9 +150,9 @@ class FPA:
 
     def _less_than(self, x: FPANumber, y: FPANumber):
         if x._sign != y._sign or x._exponent > y._exponent:
-            return x._sign == -1
+            return x.is_negative()
         if x._exponent < y._exponent:
-            return x._sign == 1
+            return x.is_positive()
         return x._sign * compare(x._mantissa, y._mantissa) == -1
 
     @_nan_safe
@@ -285,7 +294,7 @@ class FPA:
     @_overflow
     @_underflow
     def exp(self, x: FPANumber, iterations=100):
-        if x._sign == -1:
+        if x.is_negative():
             one = self.new(1)
             return self._div(one, self._log(x.abs(), iterations))
         
@@ -313,7 +322,7 @@ class FPA:
         return res
 
     def _log(self, x: FPANumber, iterations=1000):
-        if x._sign == 1 and not x.is_zero():
+        if x.is_positive() and not x.is_zero():
             # x = ab and b = base^ex
             # ln(x) = ln(ab) = ln(a) + ln(b) = ln(a) + exln(base)
             b_mantissa = [1]
@@ -337,7 +346,7 @@ class FPA:
     @_nan_safe
     @_same_fpa
     def log_any(self, x: FPANumber, y: FPANumber):
-        if x._sign == 1 and not x.is_zero() and not self._equal(x, self.new(1)):
+        if x.is_positive() and not x.is_zero() and not self._equal(x, self.new(1)):
             return self._div(self._log(y), self._log(x))
         # exception
 
@@ -364,14 +373,14 @@ class FPA:
             return x
         
         if x.is_zero():
-            if y._sign == 1:
+            if y.is_negative() and not y.is_zero():
                 return x
             # excepcion
         
-        if y._sign == -1:
+        if y.is_negative():
             return self._div(one, self._pow(x, y.abs()))
         
-        if x._sign == -1 and not y.is_integer():
+        if x.is_negative() and not y.is_integer():
             # exception
             pass
         
