@@ -141,17 +141,18 @@ class FPA:
         return FPANumber.create(n, self._base, self._mantissa_length)
 
 
+    @_nan_safe
     def _equal(self, x: FPANumber, y: FPANumber):
         return x._exponent == y._exponent and \
             x._sign == y._sign and \
             all(a == b for a, b in zip(x._mantissa, y._mantissa))
 
-    @_nan_safe
     @_same_fpa
     def equal(self, x: FPANumber, y: FPANumber):
         return self._equal(x, y)
 
 
+    @_nan_safe
     def _less_than(self, x: FPANumber, y: FPANumber):
         if x._sign != y._sign or x._exponent > y._exponent:
             return x.is_negative()
@@ -159,39 +160,39 @@ class FPA:
             return x.is_positive()
         return x._sign * compare(x._mantissa, y._mantissa) == -1
 
-    @_nan_safe
     @_same_fpa
     def less_than(self, x: FPANumber, y: FPANumber):
         return self._less_than(x, y)
 
 
+    @_nan_safe
     def _great_than(self, x: FPANumber, y: FPANumber):
         return not (self._less_than(x, y) or self._equal(x, y))
 
-    @_nan_safe
     @_same_fpa
     def great_than(self, x: FPANumber, y: FPANumber):
         self._great_than(x, y)
 
 
+    @_nan_safe
     def _less_or_equal(self, x: FPANumber, y: FPANumber):
         return not self._great_than(x, y)
 
-    @_nan_safe
     @_same_fpa
     def less_or_equal(self, x: FPANumber, y: FPANumber):
         return self._less_or_equal(x, y)
 
 
+    @_nan_safe
     def _great_or_equal(self, x: FPANumber, y: FPANumber):
         return not self._less_than(x, y)
 
-    @_nan_safe
     @_same_fpa
     def great_or_equal(self, x: FPANumber, y: FPANumber):
         return not self._great_or_equal(x, y)
 
 
+    @_nan_safe
     def _is_pair(self, x: FPANumber):
         if x.is_integer():
             two = self.new(2)
@@ -200,21 +201,23 @@ class FPA:
         
         return False
 
-    @_nan_safe
     @_same_fpa
     def is_pair(self, x: FPANumber):
         return self._is_pair(x)
 
 
+    @_nan_safe
     def _is_inf(self, x: FPANumber):
         return self._equal(x.abs(), self._plus_inf)
 
-    @_nan_safe
     @_same_fpa
     def is_inf(self, x: FPANumber):
         return self._is_inf(x)
 
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _sum(self, x: FPANumber, y: FPANumber):
         x_s, y_s = x._sign, y._sign
         x, y = x.abs(), y.abs()
@@ -235,10 +238,7 @@ class FPA:
         e = x._exponent - (len(mx) - len(m))
         return FPANumber(self._base, e, m, x_s)
 
-    @_nan_safe
     @_same_fpa
-    @_overflow
-    @_underflow
     def sum(self, x: FPANumber, y: FPANumber):
         return self._sum(x, y)
 
@@ -252,6 +252,9 @@ class FPA:
         return self.sum(x, y)
 
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _mul(self, x: FPANumber, y: FPANumber):
         if (x.is_zero() and self._is_inf(y)) or (self._is_inf(x) and y.is_zero()):
             return self._nan
@@ -263,14 +266,14 @@ class FPA:
         e += len(m) - res_expected_length
         return FPANumber(self._base, e, m[:self._mantissa_length], x._sign * y._sign)
 
-    @_nan_safe
     @_same_fpa
-    @_overflow
-    @_underflow
     def mul(self, x: FPANumber, y: FPANumber):
         return self._mul(x, y)
 
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _div(self, x: FPANumber, y: FPANumber):
         if y.is_zero():
             if x.is_zero():
@@ -292,10 +295,7 @@ class FPA:
         e -= zc
         return FPANumber(self._base, e, m, x._sign * y._sign)
 
-    @_nan_safe
     @_same_fpa
-    @_overflow
-    @_underflow
     def div(self, x: FPANumber, y: FPANumber):
         return self._div(x, y)
 
@@ -317,6 +317,9 @@ class FPA:
         
         return res
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _exp(self, x: FPANumber, iterations=100):
         if x.is_negative():
             one = self.new(1)
@@ -324,10 +327,7 @@ class FPA:
         
         return self._raw_exp(x, iterations)
 
-    @_nan_safe
     @_same_fpa
-    @_overflow
-    @_underflow
     def exp(self, x: FPANumber, iterations=100):
         return self._exp(x, iterations)
 
@@ -352,6 +352,9 @@ class FPA:
         
         return res
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _log(self, x: FPANumber, iterations=1000):
         if x.is_negative() or x.is_zero():
             return self._nan
@@ -368,10 +371,7 @@ class FPA:
 
         return self._sum(lna, lnb)
 
-
-    @_nan_safe
     @_same_fpa
-    @_underflow
     def log(self, x: FPANumber, iterations=1000):
         return self._log(x, iterations)
 
@@ -383,6 +383,9 @@ class FPA:
         # exception
 
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _pow(self, x: FPANumber, y: FPANumber):
         if y.is_integer():
             iterations = int(y.export())
@@ -394,10 +397,7 @@ class FPA:
         
         return self._exp(self._mul(y, self._log(x)), 100)
 
-    @_nan_safe
     @_same_fpa
-    @_overflow
-    @_underflow
     def pow(self, x: FPANumber, y: FPANumber):
         one = self.new(1)
 
@@ -419,6 +419,9 @@ class FPA:
         return self._pow(x, y)
 
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _sin(self, x: FPANumber, iterations):
         twopi = self._mul(self.new(2), self._pi)
         while self._less_or_equal(x, self._minus_zero):
@@ -455,13 +458,14 @@ class FPA:
         
         return res
 
-    @_nan_safe
     @_same_fpa
-    @_underflow
     def sin(self, x: FPANumber, iterations=100):
         return self._sin(x, iterations)
 
 
+    @_nan_safe
+    @_overflow
+    @_underflow
     def _cos(self, x: FPANumber, iterations):
         twopi = self._mul(self.new(2), self._pi)
         while self._less_or_equal(x, self._minus_zero):
@@ -498,8 +502,6 @@ class FPA:
         
         return res
 
-    @_nan_safe
     @_same_fpa
-    @_underflow
     def cos(self, x: FPANumber, iterations=100):
         return self._cos(x, iterations)
