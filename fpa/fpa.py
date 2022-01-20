@@ -57,7 +57,7 @@ class FPANumber:
         b = math.pow(self._base, self._exponent - len(self._mantissa) + 1)
         for k in reversed(self._mantissa):
             res += k*b
-            b *= b
+            b *= self._base
         
         return self._sign * res
 
