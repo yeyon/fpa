@@ -375,12 +375,9 @@ class FPA:
     def log(self, x: FPANumber, iterations=1000):
         return self._log(x, iterations)
 
-    @_nan_safe
     @_same_fpa
     def log_any(self, x: FPANumber, y: FPANumber):
-        if x.is_positive() and not x.is_zero() and not self._equal(x, self.new(1)):
-            return self._div(self._log(y), self._log(x))
-        # exception
+        return self._div(self._log(y), self._log(x))
 
 
     @_nan_safe
